@@ -1,0 +1,24 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t kamilklasicki/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true kamilklasicki/react-test npm run test -- --coverage
+
+after_success:
+    - docker build -t kamilklasicki/multi-client ./client
+    - docker build -t kamilklasicki/multi-nginx ./nginx
+    - docker build -t kamilklasicki/multi-server ./server
+    - docker build -t kamilklasicki/multi-worker ./worker
+# Log in to docker cli
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# Take those images and push them to docker hub
+    - docker push kamilklasicki/multi-client
+    - docker push kamilklasicki/multi-nginx
+    - docker push kamilklasicki/multi-server
+    - docker push kamilklasicki/multi-worker
+
+
